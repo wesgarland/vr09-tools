@@ -94,8 +94,23 @@ if (!Object.hasOwnProperty("defineProperty"))
 
 exports.Registration = function UPG_Registration(set, reg)
 {
-  var offset = 256 + (reg * 392);
-  this.data = set.storage.slice(offset, offset + 392);
+  var offset;
+
+  if (arguments.length == 2)
+  {
+    offset = 256 + (reg * 392);
+    this.data = set.storage.slice(offset, offset + 392);
+  }
+}
+
+exports.Registration.prototype.duplicate = function UPG_Registration_duplicate()
+{
+  var newReg = new Registration();
+
+  newReg.data = new BINARY.ByteArray(392);
+  this.data.copy(newReg.data);
+
+  return newReg;
 }
 
 Object.defineProperty(exports.Registration.prototype, "name", 
@@ -103,7 +118,13 @@ Object.defineProperty(exports.Registration.prototype, "name",
   get: function UPG_Registration_name_getter() 
   { 
     return stringField(this.data, 67, 12);
-  } 
+  },
+
+  set: function UPG_Registration_name_setter(val)
+  {
+    var baName = new BINARY.ByteArray((val + "                ").slice(0,12));
+    baName.copy(this.data, 0, undefined, 67);
+  }
 });
 
 exports.Registration.prototype.toString = function UPG_Registration_toString()
@@ -128,15 +149,15 @@ exports.RegistrationSet = function UPG_RegistrationSet(filename)
   Object.defineProperty(this, "name", 
   { 
     get: function UPG_RegistrationSet_getter()
-         { 
-	   return stringField(this.storage, 16, 16);
-	 },
+    { 
+      return stringField(this.storage, 16, 16);
+    },
 
     set: function UPG_RegistrationSet_setter(val)
-         {
-	   var baName = new BINARY.ByteArray((val + "                ").slice(0,16));
-	   baName.copy(this.storage, 0, undefined, 16);
-	 }
+    {
+      var baName = new BINARY.ByteArray((val + "                ").slice(0,16));
+      baName.copy(this.storage, 0, undefined, 16);
+    }
   });
 }
 
@@ -148,8 +169,11 @@ exports.RegistrationSet.prototype.toString = function UPG_RegistrationSet_toStri
 exports.RegistrationSet.prototype.save = function UPG_RegistrationSet_save(filename)
 {
   var file = FS.openRaw(filename, { write: true, create: true });
+  var i;
 
-  file.write(this.storage);
+  file.write(this.storage.slice(0, 256));
+  for (i=0; i < 100; i++)
+    file.write(this[i].data);
   file.close();
 }
 
@@ -178,6 +202,11 @@ if (!BINARY.ByteArray.prototype.copy)
 }
 
 exports.RegistrationSet.prototype.rename = function UPG_RegistrationSet_rename(name)
+{
+  this.name = name;
+}
+
+exports.Registration.prototype.rename = function UPG_Registration_rename(name)
 {
   this.name = name;
 }
