@@ -1,0 +1,140 @@
+#! /usr/bin/gsr -C
+
+/**
+ *  Copyright (c) 2014 Wes Garland <wes@page.ca>
+ *
+ *  This file is part of vr09-tools.
+ *  vr09-tools is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  vr09-tools is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with vr09-tools.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  @file           vr09-regedit    Program to visualize and modify
+ *                                  Roland VR-09 Registration Sets. 
+ *
+ *  @author         Wes Garland, wes@page.ca
+ *  @date           Aug 2014
+ */ 
+
+const upg = require("vr09/upg");
+const Registration = upg.Registration;
+const RegistrationSet = upg.RegistrationSet;
+
+function showAllRegistrations(set)
+{
+  var i, bank, button;
+
+  for (i=0; i < 100; i++)
+  {
+    bank = Math.floor(i / 4) + 1;
+    button = (i % 4) + 1;
+    if (button === 1)
+      print("\nBank: " + bank);
+    print(button + " - " + new Registration(set, i).name);
+  }
+}
+
+function showHeader(set)
+{
+  print("File Format: " + set.format);
+  print("Set Name:    " + set.name);
+}
+
+function usage(invocation)
+{
+  print("");
+  print("vr09-regedit - Editor for VR09 Registrations and Registration Sets");
+  print("usage: " + invocation + " <filename.UPG> <command [args]>");
+  print("");
+  print("The commmands are: ");
+  print(" - show <header | 1-100 | all>    Show contents of the registration set");
+  print(" - save <filename>                Save the registration set");
+  print("");
+
+  throw 0;
+}
+
+function main(argv, argc)
+{
+  var set;
+  var cmd, arg;
+
+  if (argc == 2)
+  {
+    if (argv[1] != "--version")
+      usage();
+  }
+  else
+  {
+    if (argc < 3)
+      usage(argv[0]);
+    set = new RegistrationSet(argv[1]);
+    argv.shift();
+  }
+
+  argv.shift();
+
+  while(argv.length)
+  {
+    cmd = argv.shift();
+
+    switch(cmd)
+    {
+      case "version": case "--version":
+	print("vr09-tools 0.01a");
+	throw 0;
+      case "help": case "-h": case "--help":
+	usage();
+	break;
+      case "show":
+	arg = argv.shift();
+	switch (arg)
+        {
+  	  case "header":
+	    showHeader(set);
+	    break;
+	  case "all":
+	    showHeader(set);
+	    showAllRegistrations(set);
+	    break;
+  	  default:
+	    print(new Registration(set, arg).name);
+	    break;
+	}
+        break;
+      case "save":
+	set.save(argv.shift());
+        break;        
+      default:
+	if (set[cmd] && !set.hasOwnProperty(cmd) && typeof set[cmd] === "function")
+	  set[cmd](argv.shift());
+	else
+	{
+	  print("invalid command: " + cmd);
+	  throw 1;
+	}
+    }
+  }
+}
+
+/* Work-around for GPSEE 0.21 shutdown bug */
+try
+{
+  main(arguments, arguments.length);
+  require("gpsee")._exit(3);
+}
+catch (e)
+{
+  if (typeof e === "number")
+    require("gpsee")._exit(e);
+  else
+    throw e;
+}
