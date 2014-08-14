@@ -28,6 +28,72 @@ const upg = require("vr09/upg");
 const Registration = upg.Registration;
 const RegistrationSet = upg.RegistrationSet;
 
+/** 
+ *  Parse a string representing a bank and button number, i.e. "3-4"
+ *  for the fourth registration in bank 3, into a set index.
+ *
+ *  Can also "parse" a number between 0 and 99 for users who prefer
+ *  to work directly with the set index.
+ */
+function parsePatch(str)
+{
+  var bank, button, number;
+  var a = str.split("-");
+  if (a.length != 2)
+  {
+    if (typeof str != "number")
+      number = parseInt(str, 10);
+    if (number >= 0 && number < 100)
+      return number;
+    throw new Error("'" + str + "' is not a valid patch location. Use Bank-Number");
+  }
+
+  bank = parseInt(a[0], 10);
+  button = parseInt(a[1], 10);
+  if (bank < 0 || button < 0 || bank > 25 || button > 4)
+    throw new Error("'" + str + "' is not a valid patch location. Use Bank-Number, where Bank <= 25 and Number <= 4");
+  return ((bank-1) * 4) + button - 1;
+}
+
+/**
+ *  Process commands which operate in registrations instead of registration sets. 
+ */
+function doPatchCmds(set, registrationNumber, argv)
+{
+  var cmd, reg;
+
+  while (argv.length)
+  {
+    cmd = argv.shift();
+    reg = set[registrationNumber];	
+    switch (cmd)
+    {
+      case "end":
+	return;
+      case "next":
+	registrationNumber = (registrationNumber + 1 % 100);
+	break;
+      case "prev":
+	registrationNumber = registrationNumber ? registrationNumber - 1 : 99;
+        break;
+      case "patch":
+        registrationNumber = parsePatch(argv.shift());
+	break;
+      case "copy":
+	set[parsePatch(argv.shift())] = reg.duplicate();
+	break;
+      default:
+	if (reg[cmd] && !reg.hasOwnProperty(cmd) && typeof reg[cmd] === "function")
+	  reg[cmd](argv.shift());
+	else
+	{
+	  print("invalid command: " + cmd);
+	  throw 1;
+	}
+    }
+  }
+}
+
 function showAllRegistrations(set)
 {
   var i, bank, button;
@@ -48,17 +114,34 @@ function showHeader(set)
   print("Set Name:    " + set.name);
 }
 
-function usage(invocation)
+var argvZero;
+function usage()
 {
   print("");
   print("vr09-regedit - Editor for VR09 Registrations and Registration Sets");
-  print("usage: " + invocation + " <filename.UPG> <command [args]>");
+  print("usage: " + argvZero + " <filename.UPG> <command [args]>");
   print("");
-  print("The commmands are: ");
+  print("The set commmands are: ");
   print(" - show <header | 1-100 | all>    Show contents of the registration set");
   print(" - save <filename>                Save the registration set");
+  print(" - patch <B-N>                    Work with patch N in bank B");
+  print(" - rename <new name>              Rename the set (use quotes!)");
   print("");
-
+  print("The patch commmands are: ");
+  print(" - end                            Go back to working with registration set");
+  print(" - next                           Work with the next patch");
+  print(" - prev                           Work with the previous patch");
+  print(" - patch <B-N>                    Work with patch N in bank B");
+  print(" - rename <new name>              Rename the patch (use quotes!)");
+  print(" - store <B-N>                    Store the patch into new location");
+  print(" - read <filename>                Read a patch file into the current location"):
+  print(" - write <filename>               Write the current patch into a patch file");
+  print(" - repeat until <B-N>             Do next, repeat the patch operation, and end");
+  print("                                  if the patch number matches B-N");
+  print("");
+  print("Patch filenames have markup sequences: ");
+  print(" - %n                             Patch name");
+  print(" - %i                             Patch number (0-99)");
   throw 0;
 }
 
@@ -66,6 +149,8 @@ function main(argv, argc)
 {
   var set;
   var cmd, arg;
+
+  argvZero = argv[0];
 
   if (argc == 2)
   {
@@ -75,7 +160,7 @@ function main(argv, argc)
   else
   {
     if (argc < 3)
-      usage(argv[0]);
+      usage();
     set = new RegistrationSet(argv[1]);
     argv.shift();
   }
@@ -110,9 +195,9 @@ function main(argv, argc)
 	    break;
 	}
         break;
-      case "save":
-	set.save(argv.shift());
-        break;        
+      case "patch":
+        doPatchCmds(set, parsePatch(argv.shift()), argv);
+	break;
       default:
 	if (set[cmd] && !set.hasOwnProperty(cmd) && typeof set[cmd] === "function")
 	  set[cmd](argv.shift());

@@ -25,7 +25,7 @@ Tips
 You can run programs in this directory without installing them, which is useful for
 debugging. This is how:
 
-bash# gsr -c 'require.paths.push(".")' -F vr09-regedit
+bash# gsr -c 'require.paths.push(".")' -F vr09-regedit -- --help
 
 Author
 ======
