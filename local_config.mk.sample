@@ -1,0 +1,3 @@
+BUILD                   ?= RELEASE
+GSR_SHEBANG_LINK        ?= /usr/bin/gsr
+
