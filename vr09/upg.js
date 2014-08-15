@@ -23,74 +23,8 @@
  */ 
 
 const FS = require("fs-base");
-const ffi = require("gffi");
 const BINARY = require("binary");
-
-const _mmap 	= new ffi.CFunction(ffi.pointer, 	"mmap", 	ffi.pointer, ffi.size_t, ffi.int, ffi.int, ffi.int, ffi.off_t);
-const _munmap 	= new ffi.CFunction(ffi.int, 		"munmap", 	ffi.pointer, ffi.size_t);
-const _open 	= new ffi.CFunction(ffi.int, 		"open", 	ffi.pointer, ffi.int, ffi.int);
-const _close 	= new ffi.CFunction(ffi.int,		"close", 	ffi.int);
-const _strerror = new ffi.CFunction(ffi.pointer,	"strerror", 	ffi.int);
-const _fstat 	= new ffi.CFunction(ffi.int, 		"fstat", 	ffi.int, ffi.pointer);
-
-function perror(msg)
-{
-  if (ffi.errno)
-    return msg + ": " + _strerror(ffi.errno).asString();
-
-  return msg;
-}
-
-function mmap(filename)
-{
-  var fd = _open(filename, ffi.std.O_RDONLY, parseInt('0666'));
-  if (fd == -1)
-    throw(new Error(perror("Cannot open file " + filename)));
-
-  try        
-  {
-    var sb = new ffi.MutableStruct("struct stat");
-    if (_fstat(fd, sb) != 0)
-      throw(new Error(perror("Cannot stat file " + filename)));
-
-    var mem = _mmap.call(null, sb.st_size, ffi.std.PROT_READ, ffi.std.MAP_PRIVATE, fd, 0);
-    if (mem == ffi.Memory(-1))
-      throw(new Error(perror("Cannot read file " + filename)));
-
-    mem.finalizeWith(_munmap, mem, sb.st_size);
-    return BINARY.ByteArray(mem, sb.st_size);
-  }
-  finally
-  {
-    _close(fd);
-  }
-}
-
-function stringField(data, start, length)
-{
-  var ba = BINARY.ByteArray(data.slice(start, start + length));
-  var i;
-
-  for (i=0; i < ba.length; i++)
-  {
-    if (ba[i] == 0)
-    {
-      ba.length = i;
-      break;
-    }
-  }
-
-  return ffi.Memory(ba).asString();
-}
-
-if (!Object.hasOwnProperty("defineProperty"))
-  Object.defineProperty = function(obj, propName, descriptor)
-{
-  if (descriptor.get)
-    obj.__defineGetter__(propName, descriptor.get);
-  if (descriptor.set)
-    obj.__defineSetter__(propName, descriptor.set);
-}
+const COMMON = require("./common");
 
 exports.Registration = function UPG_Registration(set, reg)
 {
@@ -113,11 +47,21 @@ exports.Registration.prototype.duplicate = function UPG_Registration_duplicate()
   return newReg;
 }
 
+exports.Registration.prototype.save = function UPG_Registration_save(filenameFormat, set, i)
+{
+  var filename = COMMON.formatString(filenameFormat, set, i);
+  var file = FS.openRaw(filename, { write: true, create: true } );
+  
+  file.write(this.data);
+  file.close();
+}
+
+/** Setter and Getter for Registration.prototype.name */
 Object.defineProperty(exports.Registration.prototype, "name", 
 { 
   get: function UPG_Registration_name_getter() 
   { 
-    return stringField(this.data, 67, 12);
+    return COMMON.stringField(this.data, 67, 12);
   },
 
   set: function UPG_Registration_name_setter(val)
@@ -137,7 +81,7 @@ exports.RegistrationSet = function UPG_RegistrationSet(filename)
   var i;
 
   this.filename = filename;
-  this.storage = mmap(this.filename);
+  this.storage = COMMON.mmap(this.filename);
   this.format  = this.storage.slice(0,14).decodeToString("ascii");
   if (this.format !== "AT-2012 Regist")
     throw new Error("Unrecognized file format '" + escape(ffi.Memory(this.storage.slice(0,14)).asString()).replace(/%20/g, " ") + "'");
@@ -150,7 +94,7 @@ exports.RegistrationSet = function UPG_RegistrationSet(filename)
   { 
     get: function UPG_RegistrationSet_getter()
     { 
-      return stringField(this.storage, 16, 16);
+      return COMMON.stringField(this.storage, 16, 16);
     },
 
     set: function UPG_RegistrationSet_setter(val)

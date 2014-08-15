@@ -24,9 +24,10 @@
  *  @date           Aug 2014
  */ 
 
-const upg = require("vr09/upg");
-const Registration = upg.Registration;
-const RegistrationSet = upg.RegistrationSet;
+const COMMON = require("vr09/common");
+const UPG = require("vr09/upg");
+const Registration = UPG.Registration;
+const RegistrationSet = UPG.RegistrationSet;
 
 /** 
  *  Parse a string representing a bank and button number, i.e. "3-4"
@@ -61,6 +62,7 @@ function parsePatch(str)
 function doPatchCmds(set, registrationNumber, argv)
 {
   var cmd, reg;
+  var argvBackup = argv.slice();
 
   while (argv.length)
   {
@@ -71,7 +73,7 @@ function doPatchCmds(set, registrationNumber, argv)
       case "end":
 	return;
       case "next":
-	registrationNumber = (registrationNumber + 1 % 100);
+	registrationNumber = ((registrationNumber + 1) % 100);
 	break;
       case "prev":
 	registrationNumber = registrationNumber ? registrationNumber - 1 : 99;
@@ -79,8 +81,25 @@ function doPatchCmds(set, registrationNumber, argv)
       case "patch":
         registrationNumber = parsePatch(argv.shift());
 	break;
-      case "copy":
+      case "store":
 	set[parsePatch(argv.shift())] = reg.duplicate();
+	break;
+      case "copy": 
+        reg = set[registrationNumber] = set[parsePatch(argv.shift())].duplicate();
+        break;
+      case "write": case "save":
+	reg.save(argv.shift(), set, registrationNumber);
+	break;
+      case "read": case "load":
+	reg.load(argv.shift());
+	break;
+      case "until":
+	if (parsePatch(argv.shift()) == registrationNumber)
+	  return;
+	argv = argvBackup.slice();
+        break;
+      case "print":
+        print(COMMON.formatString(argv.shift(), set, registrationNumber));
 	break;
       default:
 	if (reg[cmd] && !reg.hasOwnProperty(cmd) && typeof reg[cmd] === "function")
@@ -104,7 +123,7 @@ function showAllRegistrations(set)
     button = (i % 4) + 1;
     if (button === 1)
       print("\nBank: " + bank);
-    print(button + " - " + new Registration(set, i).name);
+    print(button + " - " + set[i].name);
   }
 }
 
@@ -133,18 +152,23 @@ function usage()
   print(" - prev                           Work with the previous patch");
   print(" - patch <B-N>                    Work with patch N in bank B");
   print(" - rename <new name>              Rename the patch (use quotes!)");
-  print(" - store <B-N>                    Store the patch into new location");
-  print(" - read <filename>                Read a patch file into the current location"):
-  print(" - write <filename>               Write the current patch into a patch file");
-  print(" - repeat until <B-N>             Do next, repeat the patch operation, and end");
-  print("                                  if the patch number matches B-N");
+  print(" - store <B-N>                    Store the patch into location B-N");
+  print(" - copy <B-N>                     Overwrite the patch with the one at B-N");
+  print(" - load <filenameFormat>          Read a patch file into the current location");
+  print(" - save <filenameFormat>          Write the current patch into a patch file");
+  print(" - until <B-N>                    Do next, repeat the patch operations in the");
+  print("                                  sequence until the patch number matches B-N");
   print("");
-  print("Patch filenames have markup sequences: ");
+  print("filenameFormat escape sequences: ");
+  print(" - %%                             Percent symbol");
+  print(" - %i                             Patch index (0-99)");
   print(" - %n                             Patch name");
-  print(" - %i                             Patch number (0-99)");
+  print(" - %N                             Patch number (B-N)");
+  print(" - %s                             Set name"); 
   throw 0;
 }
 
+/** Main entry point for the program */
 function main(argv, argc)
 {
   var set;
@@ -191,7 +215,7 @@ function main(argv, argc)
 	    showAllRegistrations(set);
 	    break;
   	  default:
-	    print(new Registration(set, arg).name);
+	    print(set[parsePatch(arg)].name);
 	    break;
 	}
         break;
