@@ -14,7 +14,7 @@ top:	install
 install: $(LIB_DIR) $(PROGRAM_DIR)
 	cp -pf $(wildcard vr09/*.js) $(LIB_DIR)
 	cp -pf $(PROGS) $(PROGRAM_DIR)
-	$(shell $(foreach PROG, $(PROGS), sed 's;^#! /usr/bin/gsr;$(GSR);' < $(PROG) > $(PROGRAM_DIR)/$(PROGS); ))
+	$(shell $(foreach PROG, $(PROGS), sed 's;^#! /usr/bin/gsr;#! $(GSR);' < $(PROG) > $(PROGRAM_DIR)/$(PROGS); ))
 #	$(shell $(foreach PROG, $(PROGS), $(PRECOMPILER) $(PROGRAM_DIR)/$(PROGS); ))
 
 $(LIB_DIR) $(PROGRAM_DIR):
