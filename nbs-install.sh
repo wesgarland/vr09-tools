@@ -15,11 +15,15 @@ LIB_DIR=${GPSEE_PREFIX}/libexec/vr09
 PROGRAM_DIR=/usr/bin
 PROGS=vr09-regedit
 
+echo mkdir -p ${LIB_DIR} ${PROGRAM_DIR}
 mkdir -p ${LIB_DIR} ${PROGRAM_DIR}
+echo cp -pf vr09/*.js ${LIB_DIR}
 cp -pf vr09/*.js ${LIB_DIR}
+echo cp -pf ${PROGS} ${PROGRAM_DIR}
 cp -pf ${PROGS} ${PROGRAM_DIR}
 for PROG in ${PROGS}
 do
+  echo sed "s;^#! /usr/bin/gsr;#! ${GSR};" < ${PROG} > ${PROGRAM_DIR}/${PROGS};
   sed "s;^#! /usr/bin/gsr;#! ${GSR};" < ${PROG} > ${PROGRAM_DIR}/${PROGS};
 done
 

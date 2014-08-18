@@ -1,0 +1,130 @@
+<!doctype html>
+<html>
+<head>
+  <title>VR-09 | Upload Registration(s)</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>  
+  <link rel="stylesheet" type="text/css" href="style.css">
+  <style type="text/css">
+SPAN.uploadLabel
+{
+  width: 17em;
+  display: inline-block;
+}
+DIV.upload
+{
+  vertical-align: top;  
+}
+DIV#uploads
+{
+  font-size: 1.1em;
+  border: 1px solid #aaa;
+  padding: 1em;
+}
+  </style>
+  <script language="JavaScript">
+function init()
+{
+  document.getElementById("uploader").elements['upg[]'].value="";
+  document.getElementById("uploader").elements['dat[]'].value="";
+}
+
+function extension(filename)
+{
+  var a=filename.split(".");
+  return a.length ? a[a.length-1] : filename;
+}
+
+function checkFileList(fileList)
+{
+  var i, needSize, ext;
+
+  for (i=0; i < fileList.length; i++)
+  {
+    ext = extension(fileList[i].name);
+    if (ext.match(/upg$/i))
+      needSize = 39456;
+    else           
+    if (ext.match(/dat$/i))
+      needSize = 43072;
+    else
+    {
+      alert(fileList[i].name + ": invalid file extension");
+      return false;
+    }
+ 
+    if (fileList[i].size != needSize)
+    {
+      alert(fileList[i].name + ": invalid file size");
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function validate(form)
+{
+  var i, datCount = 0;
+
+  try
+  {
+    if (!checkFileList(form.elements['upg[]'].files) || !checkFileList(form.elements['dat[]'].files))
+      return false;
+
+    for (i=0, fileList = form.elements['upg[]'].files; i < fileList.length; i++)
+      if (extension(fileList[i].name).match(/dat$/i))
+        datCount++;
+    for (i=0, fileList = form.elements['dat[]'].files; i < fileList.length; i++)
+      if (extension(fileList[i].name).match(/dat$/i))
+        datCount++;
+
+    if (datCount > 1)
+    {
+      alert("Please only upload one VRSYN001.DAT file at a time!");
+      return false;
+    }
+
+    if (form.elements.author.value.length < 2)
+    {
+      alert("Please fill in the author field");
+      return false;
+    }
+  }
+  catch(e)
+  {
+    console.log(e);
+    return false;
+  }
+
+  return true;
+}
+  </script>
+</head>
+<body onload="init();"><div id="wrapper">
+<h1>Upload Registration(s)</h1>
+<p>
+  VR-09 registration sets are saved onto a USB key via the <u>Media</u> menu option in the
+  data file per USB key!</i>  If you are uploading a registration set which uses deep synth edits, 
+  <b>please</b> remember to upload the VRSYN001.DAT file which accompanies the registrations, and 
+  <b>select the registrations which require this VRSYN001.DAT file</b>.
+</p>
+<p>
+  This screen lets you upload one or more registration sets, and a synth data file. You can choose 
+  which registrations in those sets you want to share with the VR-09 community after your upload.
+  We promise not to keep any registrations you don't select.
+</p>
+<div>
+  <form id="uploader" onsubmit="return validate(this);" action="upload.php" enctype="multipart/form-data" method="POST">
+    <div id="uploads">
+      <div class="upload"><span class="uploadLabel"<b>Author</b>:</span><input name="author" type="text"></div>      
+      <div class="upload"><span class="uploadLabel"<b>Registration Set</b> (VR09_xxx.UPG):</span><input name="upg[]" type="file" multiple accept=".upg,.dat"></div>
+      <div id="syndat" class="upload">
+        <span class="uploadLabel"<b>Synth Data File</b> (VRSYN001.DAT):</span><input name="dat[]" type="file" accept=".dat">
+        <font size="-1">(upload only if necessary)</font>
+      </div>
+      <div class="upload"><span class="uploadLabel"><br><br></span><input type="submit" value="Next -> "></div>
+    </div>
+ </form>
+</div>
+</div></body>
+</html>
