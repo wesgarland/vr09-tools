@@ -50,6 +50,10 @@ var datFiles = JSON.parse('<?php print(json_encode($_FILES['dat'])) ?>');
 var allFiles = JSON.parse('<?php print(json_encode(array_merge($_FILES['dat'], $_FILES['upg']))) ?>');
 <?php print(shell_exec("./upload.js '" . rawurlencode(json_encode(array_merge($_FILES['dat'], $_FILES['upg']))) . "'")) ?>
 
+/**
+ * Function to draw a registration set's select multiple. It works by
+ * cloning a template node and tweaking it for the given set.
+ */
 function drawSet(setNumber)
 {
   var i;
@@ -73,6 +77,12 @@ function drawSet(setNumber)
   template.parentNode.insertBefore(regs,template);
 }
 
+/**
+ * Function to change which registration set select multiple 
+ * is currently visible. They all exist at all times, and
+ * have the same screen location, but are switched in and
+ * would with the visibility attribute.
+ */
 function showSet(setNumber)
 {
   for (i=0; i < result.upg.length; i++)
@@ -81,11 +91,20 @@ function showSet(setNumber)
   };
 }
 
+/**
+ * Callback triggered when the registration set select
+ * element is changed.
+ */
 function changeSet(el)
 {
   showSet(el.value);
 }
 
+/**
+ * Callback triggered when the registration select multiple is
+ * changed.  We use it to update the number of registrations
+ * selected onscreen.
+ */  
 function selectRegistrations(el)
 {
   var count = 0;
@@ -103,6 +122,13 @@ function selectRegistrations(el)
   document.getElementById("selectedCount").innerHTML = count;
 }
 
+/**
+ * Callback triggered by body.onload. It draws the select box
+ * which picks which registration set to view, calls drawSet()
+ * on each set to render it based on the template, hides the
+ * template (but makes sure it takes up the correct screen area),
+ * and displays the first set uploaded.
+ */
 function init()
 {
   var i, opt;
@@ -120,6 +146,7 @@ function init()
   document.getElementById("regPicker_template").style.visibility="hidden";
   if (result.upg.length === 1)
     document.getElementById("setPicker").display = "none";
+  document.getElementById("picker").elements.uploadResult.value = JSON.stringify(result);
   showSet(0);
 }
 
@@ -132,7 +159,13 @@ function init()
     more than one registration.  Use shift-click to a select range of registrations. If you select "Entire Set", the 
     registration set will also be published.
     <div>
-      <form id="picker">
+      <form id="picker" action="/cgi-bin/publish.cgi" method="POST">
+        <input 
+	  type="hidden" 
+	  name="uploadData" 
+	  value="<?php print(rawurlencode(json_encode(array_merge($_FILES['dat'], $_FILES['upg'])))) ?>"
+	/>
+        <input type="hidden" name="uploadResult">
         <div id="setPicker">
           Show Set: 
             <select name="set" onchange="changeSet(this)"></select>
@@ -141,9 +174,9 @@ function init()
         <select multiple size=16 class="regPicker" id="regPicker_template" onchange="selectRegistrations(this)">
           <option value="all">------ Entire Set -------</option>
         </select>
+        <div><span id="selectedCount">0</span> registrations selected</div>
+        <br><br><input type="submit" value="Publish ->">
       </form>
-      <div><span id="selectedCount">0</span> registrations selected</div>
-      <br><br><input type="submit" value="Publish ->">
     </div>
   </p>
 </div></body>

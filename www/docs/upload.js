@@ -1,5 +1,9 @@
 #! /usr/bin/gsr -C
 
+try {
+/** This code runs in tandem with upload.php, to take the uploads that the PHP
+ *  page received, and put it someplace where we can find it in CommonJS-land.
+ */
 const FS = require("fs-base");
 const COMMON = require("vr09/common");
 const UPG = require("vr09/upg");
@@ -23,7 +27,6 @@ for (i=0; i < uploadData.length; i++)
   {
     if (!uploadData[i].tmp_name.match(/[a-zA-Z0-9_][a-zA-Z0-9 _\-!@#$%^&*()+={}:;''"",.><\[\]]*/i))
       throw new Error("Invalid filename " + uploadData[i].name);
-
     set = new RegistrationSet(uploadData[i].tmp_name);
     sets.push(set);
     set.save(resultDir + "/" + uploadData[i].name);
@@ -43,3 +46,8 @@ for (i=0; i < sets.length; i++)
 }
 
 print("var result = JSON.parse(unescape('"+escape(JSON.stringify(result))+"'));");
+} catch(e)
+{
+  print(e.message + " at " + e.fileName + ":" + e.lineNumber);
+  print(e.stack);
+}

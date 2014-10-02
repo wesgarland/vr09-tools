@@ -1,0 +1,93 @@
+HTML
+{
+  font-family:		arial, helvetica, clean, sans-serif;
+  font-size:		16px;
+  color:		#666666;
+  background-color: 	white;
+  background-image:	url(images/vr-09_angle_2_gal.jpg);
+  background-repeat: 	no-repeat;
+  background-attachment: fixed;
+  background-size:	contain;
+}
+
+HTML, BODY
+{
+  margin:		0px;
+  padding:		0;
+  border: 		none;
+}
+
+BODY
+{
+  margin:		20px;
+}
+	
+DIV#wrapper
+{
+  width: 		900px;
+  margin: 		auto;
+  padding:		30px;
+  background:		rgba(255,255,255,0.96);
+  border:		1px dotted #ccc;
+}
+
+H1
+{
+  background-color:	#eee;
+  margin:		0;
+  padding:		12px;
+  color:		orange;
+  background-color:	#222;
+  opacity:		0.80;
+}
+
+SELECT, INPUT
+{
+  font-size: 0.95em;
+  padding-top:   3px;
+}
+
+TABLE.errorMessage
+{
+  background:		white;
+  border:		1px dotted #999;
+  padding:		3px;
+}
+
+TABLE.errorMessage TR.errorMessage_details
+{
+  font-weight: bold;
+}
+
+TABLE.errorMessage TD
+{
+  vertical-align:       top;
+} 
+  
+TABLE.errorMessage TR TD:nth-child(2)
+{
+  font-family:          Courier, Fixed;
+} 
+
+TABLE.errorMessage TR.errorMessage_callStack DIV.scrollContainer
+{
+  overflow-y:           auto;
+  max-height:           600px;
+}
+  
+TABLE.errorMessage TR.errorMessage_callStack SPAN.functionName
+{
+  font-weight:          bold;
+  color:                black;
+}
+  
+TABLE.errorMessage TR.errorMessage_callStack SPAN.line
+{ 
+  display:              block;
+}
+  
+TABLE.errorMessage TR.errorMessage_callStack SPAN.line:hover
+{ 
+  background-color:     #888;
+  color:		white;
+}
