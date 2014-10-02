@@ -1,0 +1,110 @@
+<!doctype html>
+<html>
+<head>
+  <title>VR-09 | Organize Registration(s)</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>  
+  <link rel="stylesheet" type="text/css" href="style.css">
+  <style type="text/css">
+SPAN.uploadLabel
+{
+  width: 17em;
+  display: inline-block;
+}
+DIV.upload
+{
+  vertical-align: top;  
+}
+DIV#uploads
+{
+  font-size: 1.1em;
+  border: 1px solid #aaa;
+  padding: 1em;
+}
+  </style>
+  <script language="JavaScript">
+function init()
+{
+  document.getElementById("uploader").elements['upg[]'].value="";
+  document.getElementById("uploader").elements['dat[]'].value="";
+}
+
+function extension(filename)
+{
+  var a=filename.split(".");
+  return a.length ? a[a.length-1] : filename;
+}
+
+function checkFileList(fileList)
+{
+  var i, needSize, ext;
+
+  for (i=0; i < fileList.length; i++)
+  {
+    ext = extension(fileList[i].name);
+    if (ext.match(/upg$/i))
+      needSize = 39456;
+    else           
+    if (ext.match(/dat$/i))
+      needSize = 43072;
+    else
+    {
+      alert(fileList[i].name + ": invalid file extension");
+      return false;
+    }
+ 
+    if (fileList[i].size != needSize)
+    {
+      alert(fileList[i].name + ": invalid file size");
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function validate(form)
+{
+  var i;
+
+  try
+  {
+    if (!checkFileList(form.elements['upg[]'].files))
+      return false;
+  }
+  catch(e)
+  {
+    console.log(e);
+    return false;
+  }
+
+  return true;
+}
+  </script>
+</head>
+<body onload="init();"><div id="wrapper">
+<h1>Organize Registration(s)</h1>
+<p>
+  VR-09 registration sets are saved onto a USB key via the <u>Media</u> menu option in the VR-09, 
+  and are named VR09_xxx.UPG.
+</p>
+<p>
+  This screen lets you upload one or more registration sets, organize your registrations on screen, 
+  and download a new registration set with your changes. Registration sets uploaded via this screen
+  will not go into the shared registration library.
+</p>
+<p>
+  Please note that if you have made deep synth edits to your registrations, that they are not copied
+  with this tool, as they are not contained inside the VR09_xxx.UPG files. You can only have one 'set'
+  of deep synth edits active at a time in a VR-09, and you can only store one 'set' on a single USB
+  key, as they all have the same filename, VRSYN001.DAT.
+</p>
+<div>
+  <form id="uploader" onsubmit="return validate(this);" action="reorg.php" enctype="multipart/form-data" method="POST">
+    <div id="uploads">
+      <div class="upload"><span class="uploadLabel"<b>Registration Set</b> (VR09_xxx.UPG):</span><input name="upg[]" type="file" multiple accept=".upg"></div>
+      <div class="upload"><span class="uploadLabel"><br><br></span><input type="submit" value="Next -> "></div>
+    </div>
+ </form>
+</div>
+</div></body>
+</html>
