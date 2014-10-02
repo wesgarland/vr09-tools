@@ -84,7 +84,7 @@ exports.RegistrationSet = function UPG_RegistrationSet(filename)
   this.storage = COMMON.mmap(this.filename);
   this.format  = this.storage.slice(0,14).decodeToString("ascii");
   if (this.format !== "AT-2012 Regist")
-    throw new Error("Unrecognized file format '" + escape(ffi.Memory(this.storage.slice(0,14)).asString()).replace(/%20/g, " ") + "'");
+    throw new Error("Unrecognized file format '" + escape(require("gffi").Memory(this.storage.slice(0,14)).asString()).replace(/%20/g, " ") + "'");
   
   this.length = 100;
   for (i=0; i < this.length; i++)
